@@ -9,6 +9,9 @@
   <title>TinyApp</title>
 </head>
 <body>
+  <header>
+    <%- include('./partials/_header'); -%>
+  </header>
   <main style="margin: 1em;">
     <h3>My URLs</h3>
     <table class="table">
@@ -18,6 +21,8 @@
           <th scope="col">Long URL</th>
         </tr>
       </thead>
+      <footer>
+      </footer>
       <tbody>
         <% for(let url in urls) { %>
           <tr>
@@ -25,6 +30,9 @@
             <td><%= urls[url] %></td>
           </tr>
         <% } %>
+        <footer>
+          <%- include('./partials/_footer'); -%>
+      </footer>
       </tbody>
     </table>
   </main>
