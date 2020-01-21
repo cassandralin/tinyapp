@@ -1,12 +1,20 @@
 const express = require("express");
+const morgan = require("morgan");
 const app = express();
 const PORT = 8080; // default port 8080
 
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true})); //convert request body from buffer into string then add data to the req(request) object under the key body
 
-function generateRandomString() {
 
+function generateRandomString() {
+  let result = "";
+  const characters = "ABCDEFGHIJKLMNOPQRSTUVabcdefghijklmnopqrstuv";
+  const charactersLength = characters.length;
+  for(let i = 0; i < 6; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
 };
 
 app.set("view engine", "ejs");
@@ -16,9 +24,10 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
+
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "9sm5xK": "http://www.google.com",
 };
 
 app.get("/", (req, res) => {
@@ -48,7 +57,13 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body); //Log the POST request body to the console
-  res.send("Ok"); //Respond with "Ok" (we will replace this)
+  let shortURL = generateRandomString(); 
+  let longURL = req.body.longURL;
+  urlDatabase[shortURL] = longURL; 
+  res.redirect("/urls/" + shortURL ) //Respond with "Ok" (we will replace this)
 })
 
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL];
+  res.redirect(longURL);
+});
