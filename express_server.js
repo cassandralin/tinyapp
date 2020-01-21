@@ -51,7 +51,6 @@ app.get("/urls/new", (req, res) => { //need to put urls/new before urls/:shortUR
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  console.log(req.params)
   let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]}; //urlDatabase is object, shortURL is the key to access longURL
   res.render("urls_show", templateVars);
 });
@@ -67,3 +66,10 @@ app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
 });
+
+
+app.post('/urls/:shortURL/delete', (req, res) => {
+  const id = req.params.shortURL;
+  delete urlDatabase[id];
+  res.redirect("/urls");
+})
