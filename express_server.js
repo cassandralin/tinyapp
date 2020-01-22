@@ -22,7 +22,7 @@ function generateRandomString() {
 app.set("view engine", "ejs");
 
 app.get("/urls", (req, res) => {
-  let templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  let templateVars = { urls: urlDatabase, username: users[req.cookies["user_id"]] };
   res.render("urls_index", templateVars);
 });
 
@@ -31,6 +31,14 @@ const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",
 };
+
+const findUserByEmail = (email, users) => {
+  for (let user of Object.keys(users)) {
+    if (users[user].email === email) {
+      return users[user]
+    } 
+  }
+}
 
 app.get("/", (req, res) => {
   res.send("Hello!");  
@@ -49,12 +57,12 @@ app.listen(PORT, () => {
 });
 
 app.get("/urls/new", (req, res) => { //need to put urls/new before urls/:shortURL or else it won't reach urls/new
-let templateVars  = { username: req.cookies["username"] }
+let templateVars  = { username: users[req.cookies["user_id"]] }
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username: req.cookies["username"]}; //urlDatabase is object, shortURL is the key to access longURL
+  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username: users[req.cookies["user_id"]]}; //urlDatabase is object, shortURL is the key to access longURL
   res.render("urls_show", templateVars);
 });
 
@@ -78,8 +86,7 @@ app.post('/urls/:shortURL/delete', (req, res) => {
 })
 
 app.get("/register", (req, res) => {
-  console.log("/urls/register");
-  let templateVars  = { username: req.cookies["username"] };
+  let templateVars  = { username: users[req.cookies["user_id"]] };
   res.render("urls_registration", templateVars);
 })
 
@@ -90,25 +97,50 @@ app.post('/urls/:id', (req, res) => {
   res.redirect("/urls");
 })
 
-app.post('/login', (req, res) => {
-  let templateVars = {
-    user_id,
-  }
-  res.cookie("username", req.body.username);
-  res.redirect("/urls");
-})
+// app.post('/login', (req, res) => {
+//   let templateVars = {
+//     username: users[req.cookies["user_id"]],
+//   }
+//   res.cookie("username", req.body.username);
+//   res.redirect("/urls");
+// })
 
 
 app.post('/logout', (req, res) => {
-  res.clearCookie("username");
+  res.clearCookie("user_id");
   res.redirect("/urls");
 })
 
 app.get("/register", (req, res) => {
-  let templateVars  = { username: req.cookies["username"] };
+  let templateVars  = { username: users[req.cookies["user_id"]] };
   res.render("urls_registration", templateVars);
 })
 
+app.post("/register", (req, res) => {
+  let userEmail = req.body.email;
+  let userPassword = req.body.password;
+  if (userEmail === "" || userPassword === "") {
+    res.send('400: Page not Found', 400);
+  } else if (!findUserByEmail(req.body.email, users)) {
+    res.send('400: Page not Found', 400);
+  } else {
+    let userID = generateRandomString();
+    users[userID] = {
+      id: userID, 
+      email: userEmail, 
+      password: userPassword
+    }
+    res.cookie('user_id', userID)
+    res.redirect("/urls");
+  }
+})
+
+
+
+app.get("/login", (req, res) => {
+  let templateVars  = { username: users[req.cookies["user_id"]] };
+  res.render("urls_login", templateVars);
+})
 
 const users = { 
   "userRandomID": {
@@ -122,3 +154,15 @@ const users = {
     password: "dishwasher-funk"
   }
 }
+
+app.post("/login", (req, res) => {
+  let password = req.body.password;
+  let user = findUserByEmail(req.body.email, users)
+  if (user && user.password === req.body.password) {
+      res.cookie("user_id", user.id); 
+      res.redirect("/urls");
+  } else {
+    res.send('403: Forbidden', 403);
+  }
+})
+
