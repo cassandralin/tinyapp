@@ -10,19 +10,30 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
     </div>
+<<<<<<< HEAD
+=======
     <% if (username) { %>
       <form action="/logout" method="post">
         <label for="logout">Welcome back, <%= username %></label>
         <button type="submit" id="logout" class="btn btn-danger">LOGOUT</button>
       </form>
     <% } else { %>
+>>>>>>> feature/cookies
     <form action="/login" method="post" style="float:right;">
       <label for="username">Returning?</label>
       <input type="text" name="username" placeholder="enter username..." id="username">
       <button class="btn btn-danger">Login</button>
       </form>
-      <% } %>
+<<<<<<< HEAD
   </nav>
 </header>
 
 
+
+
+=======
+    <% } %>
+  </nav>
+</header>
+
+>>>>>>> feature/cookies
