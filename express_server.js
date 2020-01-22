@@ -50,7 +50,7 @@ app.listen(PORT, () => {
 
 app.get("/urls/new", (req, res) => { //need to put urls/new before urls/:shortURL or else it won't reach urls/new
 let templateVars  = { username: req.cookies["username"] }
-  res.render("urls_new");
+  res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
@@ -77,6 +77,12 @@ app.post('/urls/:shortURL/delete', (req, res) => {
   res.redirect("/urls");
 })
 
+app.get("/register", (req, res) => {
+  console.log("/urls/register");
+  let templateVars  = { username: req.cookies["username"] };
+  res.render("urls_registration", templateVars);
+})
+
 app.post('/urls/:id', (req, res) => {
   const id = req.params.id;
   const longURL = req.body.URL;
@@ -85,6 +91,9 @@ app.post('/urls/:id', (req, res) => {
 })
 
 app.post('/login', (req, res) => {
+  let templateVars = {
+    user_id,
+  }
   res.cookie("username", req.body.username);
   res.redirect("/urls");
 })
@@ -94,3 +103,22 @@ app.post('/logout', (req, res) => {
   res.clearCookie("username");
   res.redirect("/urls");
 })
+
+app.get("/register", (req, res) => {
+  let templateVars  = { username: req.cookies["username"] };
+  res.render("urls_registration", templateVars);
+})
+
+
+const users = { 
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: "purple-monkey-dinosaur"
+  },
+ "user2RandomID": {
+    id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: "dishwasher-funk"
+  }
+}
