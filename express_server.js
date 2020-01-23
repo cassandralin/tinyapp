@@ -3,7 +3,7 @@ const morgan = require("morgan");
 const app = express();
 const PORT = 8080; // default port 8080
 const cookieParser = require('cookie-parser');
-
+const bcrypt = require('bcrypt');
 
 
 const bodyParser = require("body-parser");
@@ -26,14 +26,16 @@ const users = {
   "userRandomID": {
     id: "userRandomID", 
     email: "a@a.com", 
-    password: "a"
+    password: bcrypt.hashSync("a", 10) //change to hashedPassword
   },
  "user2RandomID": {
     id: "user2RandomID", 
     email: "user2@gmail.com", 
-    password: "a"
+    password: bcrypt.hashSync("a", 10) //change to hashedPassword
   }
 }
+
+console.log(users);
 
 const urlDatabase = {
   "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: ["userRandomID"] },
@@ -63,11 +65,28 @@ app.get("/urls", (req, res) => {
 });
 
 const findUserByUrl = (longURLinput, urlDb) => {
+  const results = {};
   for (let url of Object.keys(urlDb)) { //searching through keys of urlDb which stores 
-    if (urlDb[url].longURL === longURLinput) return url;
+    if (urlDb[url].longURL === longURLinput) {
+      results[url]
+    };
   }
-  return undefined;
+  return results;
 }
+
+// const urlsByUser = (userID, db) => { // by mara <3<3<3
+//   const results = {};
+//   for (let key in db) {
+//     if (db[key].userID === userID) {
+//       results[key] = db[key].longURL;
+//     }
+//   }
+//   return results;
+// }
+
+// urlsByUser(req.session.user_id, urlDatabase)
+
+
 
 const findUserByEmail = (email, users) => {
   for (let user of Object.keys(users)) {
@@ -77,13 +96,6 @@ const findUserByEmail = (email, users) => {
   }
 }
 
-// const checkUser = (user_id, users) => {
-//   for (let user of Object.keys(users)) {
-//     if (users[user].id === user_id) {
-//       return users[user];
-//     }
-//   }
-// }
 
 app.get("/", (req, res) => {
   res.send("Hello!");  
@@ -102,8 +114,8 @@ app.listen(PORT, () => {
 });
 
 app.get("/urls/new", (req, res) => { //need to put urls/new before urls/:shortURL or else it won't reach urls/new
-  if (!req.cookies["user_id"]) {
-    res.redirect("/login")
+  if (!req.cookies["user_id"]) { //if no cookie exists-no one is logged in
+    res.redirect("/login") //redirect them to login
   } else { 
     let templateVars  = { user: users[req.cookies["user_id"]] }
     res.render("urls_new", templateVars)
@@ -151,22 +163,22 @@ app.post("/urls", (req, res) => {
 //   }
 
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
-  res.redirect(longURL); 
+  // const longURL = urlDatabase[req.params.shortURL];
+  res.redirect(urlDatabase[req.params.shortURL].longURL); 
 });
 
 
 app.post('/urls/:shortURL/delete', (req, res) => {
-  if (!req.cookies["user_id"]) {
-    res.redirect("/urls");
+  if (!req.cookies["user_id"]) { //if no cookie exists, no one is logged in
+    res.redirect("/urls");  //direct them to urls
   } else {
-    const user = checkUser(req.cookies["user_id"], users);
+    const user = checkUser(req.cookies["user_id"], users); //use helper function to check if the cookie matches the users
     console.log(user)
     if (user) {
 
-      if (urlDatabase[req.params.shortURL].userID[0] === user.id) {
-        delete urlDatabase[req.params.shortURL];
-        res.redirect("/urls");
+      if (urlDatabase[req.params.shortURL].userID[0] === user.id) { //returns the correct user check if the id matches
+        delete urlDatabase[req.params.shortURL]; //they can then delete
+        res.redirect("/urls"); //then redirect to urls
       } else {
         res.redirect("/urls");
       }
@@ -183,7 +195,7 @@ app.get("/register", (req, res) => {
 })
 
 app.post('/urls/:id', (req, res) => {
-  if (req.cookies["user_id"]) {
+  if (req.cookies["user_id"]) { //if the cookie exists 
   const id = req.params.id; 
   const longURL = req.body.URL;
   urlDatabase[id] = {longURL, userID: req.cookies["user_id"]}; //correct
@@ -208,6 +220,7 @@ app.post("/register", (req, res) => {
   console.log(req.body)
   let userEmail = req.body.email;
   let userPassword = req.body.password;
+  // const hashedPassword = bcrypt.hashSync(userPassword, 10) //changed to use bcrypt
   if (userEmail === "" || userPassword === "") {
     res.send('404: Information not found', 400);
   } else if (findUserByEmail(req.body.email, users)) {
@@ -217,8 +230,10 @@ app.post("/register", (req, res) => {
     users[userID] = {
       id: userID, 
       email: userEmail, 
-      password: userPassword
+      password: bcrypt.hashSync(userPassword, 10)
     }
+    console.log(`SAVING USER AS:`);
+    console.log(users);
     res.cookie('user_id', userID)
     res.redirect("/urls");
   }
@@ -234,7 +249,7 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   // let password = req.body.password;
   let user = findUserByEmail(req.body.email, users)
-  if (user && user.password === req.body.password) {
+  if (user && bcrypt.compareSync(req.body.password, user.password)) { //use bcrpt to compare passwords
       res.cookie("user_id", user.id); 
       res.redirect("/urls");
   } else {
