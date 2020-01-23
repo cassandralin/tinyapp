@@ -28,9 +28,10 @@ app.get("/urls", (req, res) => {
 
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
+  "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "userRandomID" },
+  "9sm5xK": { longURL: "http://www.google.com", userID: "userRandomID" }
 };
+
 
 const findUserByEmail = (email, users) => {
   for (let user of Object.keys(users)) {
@@ -57,20 +58,24 @@ app.listen(PORT, () => {
 });
 
 app.get("/urls/new", (req, res) => { //need to put urls/new before urls/:shortURL or else it won't reach urls/new
-let templateVars  = { username: users[req.cookies["user_id"]] }
-  res.render("urls_new", templateVars);
+  if (!req.cookies["user_id"]) {
+    res.redirect("/login")
+  } else { 
+    let templateVars  = { username: users[req.cookies["user_id"]] }
+    res.render("urls_new", templateVars)
+  }
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username: users[req.cookies["user_id"]]}; //urlDatabase is object, shortURL is the key to access longURL
+  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, username: users[req.cookies["user_id"]]}; //urlDatabase is object, shortURL is the key to access longURL
   res.render("urls_show", templateVars);
 });
 
 app.post("/urls", (req, res) => {
   let shortURL = generateRandomString(); 
   let longURL = req.body.longURL;
-  urlDatabase[shortURL] = longURL; 
-  res.redirect("/urls/" + shortURL ) //Respond with "Ok" (we will replace this)
+  urlDatabase[shortURL] = {"longURL": longURL, "userID": shortURL}; 
+  res.redirect("/urls/" + shortURL ) 
 })
 
 app.get("/u/:shortURL", (req, res) => {
@@ -93,7 +98,7 @@ app.get("/register", (req, res) => {
 app.post('/urls/:id', (req, res) => {
   const id = req.params.id;
   const longURL = req.body.URL;
-  urlDatabase[id] = longURL;
+  urlDatabase[id] = {longURL, userID: req.cookies["user_id"]};
   res.redirect("/urls");
 })
 
@@ -117,12 +122,13 @@ app.get("/register", (req, res) => {
 })
 
 app.post("/register", (req, res) => {
+  console.log(req.body)
   let userEmail = req.body.email;
   let userPassword = req.body.password;
   if (userEmail === "" || userPassword === "") {
-    res.send('400: Page not Found', 400);
-  } else if (!findUserByEmail(req.body.email, users)) {
-    res.send('400: Page not Found', 400);
+    res.send('404: Information not found', 400);
+  } else if (findUserByEmail(req.body.email, users)) {
+    res.redirect("/login");
   } else {
     let userID = generateRandomString();
     users[userID] = {
