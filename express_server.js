@@ -5,6 +5,7 @@ const PORT = 8080; // default port 8080
 const cookieParser = require('cookie-parser');
 
 
+
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true})); //convert request body from buffer into string then add data to the req(request) object under the key body
 app.use(cookieParser());
@@ -21,6 +22,33 @@ function generateRandomString() {
 
 app.set("view engine", "ejs");
 
+const users = { 
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "a@a.com", 
+    password: "a"
+  },
+ "user2RandomID": {
+    id: "user2RandomID", 
+    email: "user2@gmail.com", 
+    password: "a"
+  }
+}
+
+const urlDatabase = {
+  "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: ["userRandomID"] },
+  "9sm5xK": { longURL: "http://www.google.com", userID: ["userRandomID"] }
+};
+
+const checkUser = (user_id, users) => {
+  for (let user of Object.keys(users)) {
+    if (users[user].id === user_id) {
+      return users[user];
+    }
+  }
+}
+
+
 app.get("/urls", (req, res) => {
   let templateVars = { urls: urlDatabase, user: users[req.cookies["user_id"]] };
   if (!req.cookies["user_id"]) { //if there is no user id cookie-then the user is not logged in
@@ -34,15 +62,8 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
-
-const urlDatabase = {
-  "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: ["userRandomID"] },
-  "9sm5xK": { longURL: "http://www.google.com", userID: ["userRandomID"] }
-};
-
-
 const findUserByUrl = (longURLinput, urlDb) => {
-  for (let url of Object.keys(urlDb)) {
+  for (let url of Object.keys(urlDb)) { //searching through keys of urlDb which stores 
     if (urlDb[url].longURL === longURLinput) return url;
   }
   return undefined;
@@ -55,6 +76,14 @@ const findUserByEmail = (email, users) => {
     } 
   }
 }
+
+// const checkUser = (user_id, users) => {
+//   for (let user of Object.keys(users)) {
+//     if (users[user].id === user_id) {
+//       return users[user];
+//     }
+//   }
+// }
 
 app.get("/", (req, res) => {
   res.send("Hello!");  
@@ -102,20 +131,24 @@ app.post("/urls", (req, res) => {
     console.log('after: ', urlDatabase);
     res.redirect("/urls/" + findUserByUrl(req.body.longURL, urlDatabase));
   }
-  // for (const item in urlDatabase) {
-  //   if(urlDatabase[item].longURL === request.body.longURL) {
-  //     urlDatabase[item].userID.push[request.cookies.user_id];
-  //   } else {
-
-    // }
-  // }
-  // let shortURL = generateRandomString(); 
-  // let longURL = req.body.longURL;
-  // urlDatabase[shortURL] = {longURL, "userID": req.cookies["user_id"]}; 
-  // res.redirect("/urls/" + randomString);
 })
 
-
+// app.post("/urls", (req, res) => {
+//   console.log('before: ', urlDatabase);
+//   if (!req.cookies["user_id"]) { // if there is no user cookie 
+//     res.redirect("/login") // want them to login
+//   } else if (findUserByUrl(req.body.longURL, urlDatabase) === undefined) {  
+//     let randomString = generateRandomString(); 
+//     urlDatabase[randomString] = {"longURL": req.body.longURL, "userID": [req.cookies.user_id]}
+//     console.log('after: ', urlDatabase);
+//     res.redirect("/urls/" + randomString);
+//   } else if (findUserByUrl(req.body.longURL, urlDatabase) !== undefined) {
+//       if (!findUserByUrl(req.body.longURL, urlDatabase).userID.includes(req.cookies.user_id)) {
+//         urlDatabase[findUserByUrl(req.body.longURL, urlDatabase)].userID.push(req.cookies.user_id);
+//       }
+//     console.log('after: ', urlDatabase);
+//     res.redirect("/urls/" + findUserByUrl(req.body.longURL, urlDatabase));
+//   }
 
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
@@ -124,9 +157,24 @@ app.get("/u/:shortURL", (req, res) => {
 
 
 app.post('/urls/:shortURL/delete', (req, res) => {
-  const id = req.params.shortURL;
-  delete urlDatabase[id];
-  res.redirect("/urls");
+  if (!req.cookies["user_id"]) {
+    res.redirect("/urls");
+  } else {
+    const user = checkUser(req.cookies["user_id"], users);
+    console.log(user)
+    if (user) {
+
+      if (urlDatabase[req.params.shortURL].userID[0] === user.id) {
+        delete urlDatabase[req.params.shortURL];
+        res.redirect("/urls");
+      } else {
+        res.redirect("/urls");
+      }
+
+    } else {
+      res.redirect("/urls");
+    }
+  }
 })
 
 app.get("/register", (req, res) => {
@@ -135,10 +183,14 @@ app.get("/register", (req, res) => {
 })
 
 app.post('/urls/:id', (req, res) => {
-  const id = req.params.id;
+  if (req.cookies["user_id"]) {
+  const id = req.params.id; 
   const longURL = req.body.URL;
   urlDatabase[id] = {longURL, userID: req.cookies["user_id"]}; //correct
   res.redirect("/urls");
+} else {
+  res.redirect("/urls");
+}
 })
 
 
@@ -179,19 +231,6 @@ app.get("/login", (req, res) => {
   res.render("urls_login", templateVars);
 })
 
-const users = { 
-  "userRandomID": {
-    id: "userRandomID", 
-    email: "a@a.com", 
-    password: "a"
-  },
- "user2RandomID": {
-    id: "user2RandomID", 
-    email: "user2@gmail.com", 
-    password: "a"
-  }
-}
-
 app.post("/login", (req, res) => {
   // let password = req.body.password;
   let user = findUserByEmail(req.body.email, users)
@@ -204,6 +243,3 @@ app.post("/login", (req, res) => {
 })
 
 
-const urlsForUser = function (id) {
-
-};
