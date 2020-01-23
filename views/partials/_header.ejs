@@ -8,12 +8,12 @@
       <div class="navbar-nav">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
-        
+        <a class="nav-item nav-link" href="/register ">Register</a>
       </div>
     </div>
-    <% if (username) { %>
+    <% if (user) { %>
       <form action="/logout" method="post">
-        <label for="logout">Welcome back, <%= username["email"] %></label>
+        <label for="logout">Welcome back, <%= user["email"] %></label>
         <button type="submit" id="logout" class="btn btn-danger">LOGOUT</button>
       </form>
     <% } else { %>
