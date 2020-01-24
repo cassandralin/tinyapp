@@ -47,12 +47,10 @@ app.listen(PORT, () => {
 });
 
 app.get("/urls", (req, res) => {
-  console.log(urlDatabase);
   let templateVars = { urls: urlDatabase, user: users[req.session["user_id"]] };
   if (!req.session["user_id"]) { //if there is no user id cookie-then the user is not logged in
     res.redirect("/login");  // want to redirect them to login page
   } else {
-    // let templateVars  = { user: users[req.session["user_id"]] };
     res.render("urls_index", templateVars)
   }
 });
@@ -71,7 +69,6 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 const getUserByEmail = (email, users) => {
-  console.log(email, users);
   for (let user of Object.keys(users)) {
     if (users[user].email === email) {
       return users[user];
@@ -89,13 +86,6 @@ const generateRandomString = () => {
   return result;
 };
 
-// const findUserByUrl = (longURLinput, urlDatabase) => {
-//   for (let url of Object.keys(urlDatabase)) { //searching through keys of urlDb which stores 
-//     if (urlDb[url].longURL === longURLinput) return url; //if urldatabase url(shortkey) accessing longURL value
-//   }
-//   return undefined;
-// }
-
 const checkUser = (user_id, users) => {
   for (let user of Object.keys(users)) {
     if (users[user].id === user_id) {
@@ -103,23 +93,6 @@ const checkUser = (user_id, users) => {
     }
   }
 };
-
-
-// app.post("/urls", (req, res) => {
-//   if (!req.session["user_id"]) { // if there is no user cookie
-//     res.redirect("/login"); // want them to login
-//   } else if (findUserByUrl(req.body.longURL, urlDatabase) === undefined) {
-//     let randomString = generateRandomString();
-//     urlDatabase[randomString] = {"longURL": req.body.longURL, "userID": req.session.user_id }; //
-//     res.redirect("/urls/" + randomString);
-//   } else if (findUserByUrl(req.body.longURL, urlDatabase) !== undefined) { 
-//     if (!findUserByUrl(req.body.longURL, urlDatabase).userID.includes(req.session.user_id)) {
-//       urlDatabase[findUserByUrl(req.body.longURL, urlDatabase)].userID.push(req.session.user_id);
-//     }
-//     res.redirect("/urls/" + findUserByUrl(req.body.longURL, urlDatabase));
-//   }
-// });
-
 
 const findUserByUrl = (longURLinput, urlDatabase) => {
   for (let url of Object.keys(urlDatabase)) { //searching through keys of urlDb which stores 
@@ -162,8 +135,6 @@ app.get("/register", (req, res) => {
 });
 
 app.get('/urls/:id', (req, res) => {
-  console.log(`entering urls/:id`);
-
   if (req.session.user_id) { // req.cookie["user_id"]//if the cookie exists
     const templateVars = {
       shortURL: req.params.id,
@@ -188,7 +159,6 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   let userEmail = req.body.email;
   let userPassword = req.body.password;
-  console.log(req.body.email, users);
   if (userEmail === "" || userPassword === "") {
     res.send('400: Information not found', 400);
   } else if (getUserByEmail(req.body.email, users)) {

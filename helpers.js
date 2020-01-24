@@ -17,12 +17,12 @@ const generateRandomString = () => {
   return result;
 };
 
-// const findUserByUrl = (longURLinput, urlDatabase) => {
-//   for (let url of Object.keys(urlDatabase)) { //searching through keys of urlDb which stores 
-//     if (urlDb[url].longURL === longURLinput) return url; //if urldatabase url(shortkey) accessing longURL value
-//   }
-//   return undefined;
-// }
+const findUserByUrl = (longURLinput, urlDatabase) => {
+  for (let url of Object.keys(urlDatabase)) { //searching through keys of urlDb which stores 
+    if (urlDb[url].longURL === longURLinput) return url; //if urldatabase url(shortkey) accessing longURL value
+  }
+  return undefined;
+}
 
 const checkUser = (user_id, users) => {
   for (let user of Object.keys(users)) {
@@ -32,4 +32,4 @@ const checkUser = (user_id, users) => {
   }
 };
 
-module.exports = { getUserByEmail, generateRandomString, checkUser }
+// module.exports = { getUserByEmail, generateRandomString, checkUser }
