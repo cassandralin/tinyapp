@@ -125,7 +125,7 @@ app.post('/urls/:id', (req, res) => {
 
 app.post('/logout', (req, res) => {
   res.clearCookie("user_id");
-  res.redirect("/");
+  res.redirect("/urls");
 });
 
 app.get("/register", (req, res) => {
