@@ -3,10 +3,10 @@ const app = express();
 const PORT = 8080; // default port 8080
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
-const getUserByEmail = require("./helpers");
-const generateRandomString = require("./helpers");
-const findUserByUrl = require("./helpers");
-const checkUser = require("./helpers");
+// const { getUserByEmail } = require("./helpers");
+// const generateRandomString = require("./helpers");
+// // const findUserByUrl = require("./helpers");
+// const checkUser = require("./helpers");
 
 const bodyParser = require("body-parser");
 app.set("view engine", "ejs");
@@ -47,12 +47,13 @@ app.listen(PORT, () => {
 });
 
 app.get("/urls", (req, res) => {
+  console.log(urlDatabase);
   let templateVars = { urls: urlDatabase, user: users[req.session["user_id"]] };
   if (!req.session["user_id"]) { //if there is no user id cookie-then the user is not logged in
     res.redirect("/login");  // want to redirect them to login page
   } else {
-    let templateVars  = { user: users[req.session["user_id"]] };
-    res.render("urls_new", templateVars)
+    // let templateVars  = { user: users[req.session["user_id"]] };
+    res.render("urls_index", templateVars)
   }
 });
 
@@ -65,62 +66,113 @@ app.get("/urls/new", (req, res) => { //need to put urls/new before urls/:shortUR
   }
 });
 
-app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, user: users[req.cookies["user_id"]]}; //urlDatabase is object, shortURL is the key to access longURL
-  res.render("urls_show", templateVars);
+app.get("/u/:shortURL", (req, res) => {
+  res.redirect(urlDatabase[req.params.shortURL].longURL);
 });
 
-app.post("/urls", (req, res) => {
-  if (!req.session["user_id"]) { // if there is no user cookie
-    res.redirect("/login"); // want them to login
-  } else if (findUserByUrl(req.body.longURL, urlDatabase) === undefined) {
-    let randomString = generateRandomString();
-    urlDatabase[randomString] = {"longURL": req.body.longURL, "userID": req.session.user_id };
-    res.redirect("/urls/" + randomString);
-  } else if (findUserByUrl(req.body.longURL, urlDatabase) !== undefined) {
-    if (!findUserByUrl(req.body.longURL, urlDatabase).userID.includes(req.session.user_id)) {
-      urlDatabase[findUserByUrl(req.body.longURL, urlDatabase)].userID.push(req.session.user_id);
+const getUserByEmail = (email, users) => {
+  console.log(email, users);
+  for (let user of Object.keys(users)) {
+    if (users[user].email === email) {
+      return users[user];
+    } 
+  }
+}
+
+const generateRandomString = () => {
+  let result = "";
+  const characters = "ABCDEFGHIJKLMNOPQRSTUVabcdefghijklmnopqrstuv";
+  const charactersLength = characters.length;
+  for (let i = 0; i < 6; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
+};
+
+// const findUserByUrl = (longURLinput, urlDatabase) => {
+//   for (let url of Object.keys(urlDatabase)) { //searching through keys of urlDb which stores 
+//     if (urlDb[url].longURL === longURLinput) return url; //if urldatabase url(shortkey) accessing longURL value
+//   }
+//   return undefined;
+// }
+
+const checkUser = (user_id, users) => {
+  for (let user of Object.keys(users)) {
+    if (users[user].id === user_id) {
+      return users[user];
     }
+  }
+};
+
+
+// app.post("/urls", (req, res) => {
+//   if (!req.session["user_id"]) { // if there is no user cookie
+//     res.redirect("/login"); // want them to login
+//   } else if (findUserByUrl(req.body.longURL, urlDatabase) === undefined) {
+//     let randomString = generateRandomString();
+//     urlDatabase[randomString] = {"longURL": req.body.longURL, "userID": req.session.user_id }; //
+//     res.redirect("/urls/" + randomString);
+//   } else if (findUserByUrl(req.body.longURL, urlDatabase) !== undefined) { 
+//     if (!findUserByUrl(req.body.longURL, urlDatabase).userID.includes(req.session.user_id)) {
+//       urlDatabase[findUserByUrl(req.body.longURL, urlDatabase)].userID.push(req.session.user_id);
+//     }
+//     res.redirect("/urls/" + findUserByUrl(req.body.longURL, urlDatabase));
+//   }
+// });
+
+
+const findUserByUrl = (longURLinput, urlDatabase) => {
+  for (let url of Object.keys(urlDatabase)) { //searching through keys of urlDb which stores 
+    if (urlDatabase[url].longURL === longURLinput) return url; //if urldatabase url(shortkey) accessing longURL value
+  }
+  return undefined;
+}
+
+app.post("/urls", (req, res) => {
+  if (!req.session["user_id"]) { // if there is no user cookie 
+    res.redirect("/login") // want them to login
+  } else if (findUserByUrl(req.body.longURL, urlDatabase) === undefined) {  
+    let randomString = generateRandomString(); 
+    urlDatabase[randomString] = {"longURL": req.body.longURL, "userID": req.session.user_id } 
+    res.redirect("/urls/" + randomString);
+  } else if (findUserByUrl(req.body.shortURL, urlDatabase) !== undefined) {
+      if (!findUserByUrl(req.body.shortURL, urlDatabase).userID.includes(req.session.user_id)) {
+        urlDatabase[findUserByUrl(req.body.shortURL, urlDatabase)].userID.push(req.session.user_id);
+      }
     res.redirect("/urls/" + findUserByUrl(req.body.longURL, urlDatabase));
   }
-});
+})
+
 
 app.get("/u/:shortURL", (req, res) => {
   res.redirect(urlDatabase[req.params.shortURL].longURL);
 });
 
 app.post('/urls/:shortURL/delete', (req, res) => {
-  if (!req.session.user_id) { //if no cookie exists, no one is logged in
-    res.redirect("/urls");  //direct them to urls
-  } else {
-    const user = checkUser(req.session.user_id, users); //use helper function to check if the cookie matches the users
-    if (user) {
-      if (urlDatabase[req.params.shortURL].userID[0] === user.id) { //returns the correct user check if the id matches
-        delete urlDatabase[req.params.shortURL]; //they can then delete
-        res.redirect("/urls"); //then redirect to urls
-      } else {
-        res.redirect("/urls");
-      }
-    } else {
-      res.redirect("/urls");
-    }
+  const user = checkUser(req.session.user_id, users); //use helper function to check if the cookie matches the users
+  if (user && urlDatabase[req.params.shortURL].userID === user.id) { //if user matches 
+    delete urlDatabase[req.params.shortURL]; //they can then delete
   }
-});
+  res.redirect("/urls"); // else they will be redirected to /urls
+})
 
 app.get("/register", (req, res) => {
   let templateVars  = { urls:urlDatabase, user: users[req.session["user_id"]] };
   res.render("urls_registration", templateVars);
 });
 
-app.post('/urls/:id', (req, res) => {
+app.get('/urls/:id', (req, res) => {
+  console.log(`entering urls/:id`);
+
   if (req.session.user_id) { // req.cookie["user_id"]//if the cookie exists
-    const id = req.params.id;
-    const longURL = req.body.URL;
-    urlDatabase[id] = {longURL, userID: req.session.user_id}; //correct
-    res.redirect("/urls");
-  } else {
-    res.redirect("/urls");
-  }
+    const templateVars = {
+      shortURL: req.params.id,
+      longURL: urlDatabase[req.params.id].longURL,
+      user: req.session.user_id
+    } 
+    // urlDatabase[id] = {longURL, userID: req.session.user_id}; //they are allowed to add a long url to the urlDatabase
+    res.render("urls_show", templateVars );
+  } else res.redirect("/urls_index");
 });
 
 app.post('/logout', (req, res) => {
@@ -136,6 +188,7 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   let userEmail = req.body.email;
   let userPassword = req.body.password;
+  console.log(req.body.email, users);
   if (userEmail === "" || userPassword === "") {
     res.send('400: Information not found', 400);
   } else if (getUserByEmail(req.body.email, users)) {
