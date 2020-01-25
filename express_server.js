@@ -5,7 +5,7 @@ const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
 // const { getUserByEmail } = require("./helpers");
 // const generateRandomString = require("./helpers");
-// // const findUserByUrl = require("./helpers");
+// // const findShortUrl = require("./helpers");
 // const checkUser = require("./helpers");
 
 const bodyParser = require("body-parser");
@@ -68,7 +68,7 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(urlDatabase[req.params.shortURL].longURL);
 });
 
-const getUserByEmail = (email, users) => {
+const getUserByEmail = (email, users) => { //loops through users object and returns a user if the email matches
   for (let user of Object.keys(users)) {
     if (users[user].email === email) {
       return users[user];
@@ -95,7 +95,7 @@ const checkUser = (user_id, users) => {
 };
 
 
-const findUserByUrl = (longURLinput, urlDatabase) => {
+const findShortUrl = (longURLinput, urlDatabase) => {
   for (let url of Object.keys(urlDatabase)) { //searching through keys of urlDb which stores 
     if (urlDatabase[url].longURL === longURLinput) return url; //if urldatabase url(shortkey) accessing longURL value
   }
@@ -105,15 +105,15 @@ const findUserByUrl = (longURLinput, urlDatabase) => {
 app.post("/urls", (req, res) => {
   if (!req.session["user_id"]) { // if there is no user cookie 
     res.redirect("/login") // want them to login
-  } else if (findUserByUrl(req.body.longURL, urlDatabase) === undefined) {  
+  } else if (findShortUrl(req.body.longURL, urlDatabase) === undefined) {  
     let randomString = generateRandomString(); 
     urlDatabase[randomString] = {"longURL": req.body.longURL, "userID": req.session.user_id } 
     res.redirect("/urls/" + randomString);
-  } else if (findUserByUrl(req.body.shortURL, urlDatabase) !== undefined) {
-      if (!findUserByUrl(req.body.shortURL, urlDatabase).userID.includes(req.session.user_id)) {
-        urlDatabase[findUserByUrl(req.body.shortURL, urlDatabase)].userID.push(req.session.user_id);
+  } else if (findShortUrl(req.body.shortURL, urlDatabase) !== undefined) {
+      if (!findShortUrl(req.body.shortURL, urlDatabase).userID.includes(req.session.user_id)) {
+        urlDatabase[findShortURL(req.body.shortURL, urlDatabase)].userID.push(req.session.user_id);
       }
-    res.redirect("/urls/" + findUserByUrl(req.body.longURL, urlDatabase));
+    res.redirect("/urls/" + findShortUrl(req.body.longURL, urlDatabase));
   }
 })
 
@@ -135,6 +135,16 @@ app.get("/register", (req, res) => {
   res.render("urls_registration", templateVars);
 });
 
+app.post('/urls/:id', (req, res) => {
+  const user = checkUser(req.session.user_id, users);
+  if (urlDatabase[req.params.id] && urlDatabase[req.params.id].userID.includes(req.session.user_id)) {
+  const id = req.params.id;
+  const longURL = req.body.URL;
+  urlDatabase[id].longURL = longURL;
+  }
+  res.redirect("/urls");
+}) 
+
 app.get('/urls/:id', (req, res) => {
   if (req.session.user_id) { // req.cookie["user_id"]//if the cookie exists
     const templateVars = {
@@ -144,7 +154,7 @@ app.get('/urls/:id', (req, res) => {
     } 
     // urlDatabase[id] = {longURL, userID: req.session.user_id}; //they are allowed to add a long url to the urlDatabase
     res.render("urls_show", templateVars );
-  } else res.redirect("/urls_index");
+  } else res.render("urls_index");
 });
 
 app.post('/logout', (req, res) => {
@@ -176,12 +186,12 @@ app.post("/register", (req, res) => {
   }
 });
 
-app.get("/login", (req, res) => {
-  let templateVars  = { user: req.session.user_id }; //before user: users[req.cookies["user_id"]]
+app.get("/login", (req, res) => { 
+  let templateVars  = { user: req.session.user_id }; 
     res.render("urls_login", templateVars);
 });
 
-app.post("/login", (req, res) => {
+app.post("/login", (req, res) => { // checking if user and encrpyted password that is entered is corred by comparing to user database
   let user = getUserByEmail(req.body.email, users);
   if (user && bcrypt.compareSync(req.body.password, user.password)) {
     req.session.user_id = user.id;
