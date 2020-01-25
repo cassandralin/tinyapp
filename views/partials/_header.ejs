@@ -11,7 +11,7 @@
         <a class="nav-item nav-link" href="/register ">Register</a>
       </div>
     </div>
-    <% if (user) { %>
+    <% if (typeof user != "undefined") { %>
       <form action="/logout" method="post">
         <label for="logout">Welcome back, <%= user["email"] %></label>
         <button type="submit" id="logout" class="btn btn-danger">LOGOUT</button>
