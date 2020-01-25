@@ -94,6 +94,7 @@ const checkUser = (user_id, users) => {
   }
 };
 
+
 const findUserByUrl = (longURLinput, urlDatabase) => {
   for (let url of Object.keys(urlDatabase)) { //searching through keys of urlDb which stores 
     if (urlDatabase[url].longURL === longURLinput) return url; //if urldatabase url(shortkey) accessing longURL value
@@ -147,7 +148,7 @@ app.get('/urls/:id', (req, res) => {
 });
 
 app.post('/logout', (req, res) => {
-  res.clearCookie("user_id");
+  req.session = null
   res.redirect("/urls");
 });
 
@@ -160,7 +161,7 @@ app.post("/register", (req, res) => {
   let userEmail = req.body.email;
   let userPassword = req.body.password;
   if (userEmail === "" || userPassword === "") {
-    res.send('400: Information not found', 400);
+    res.send('400: Fields cannot be blank', 400);
   } else if (getUserByEmail(req.body.email, users)) {
     res.redirect("/login");
   } else {
@@ -186,7 +187,7 @@ app.post("/login", (req, res) => {
     req.session.user_id = user.id;
     res.redirect("/urls");
   } else {
-    res.send('403: Forbidden', 403);
+    res.send('403: Unauthorized Access', 403);
   }
 });
 
