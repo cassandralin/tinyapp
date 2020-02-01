@@ -76,10 +76,6 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
-});
-
 app.get("/urls", (req, res) => { // checks if user is logged in, if not they they are redirected to their own index page
   let templateVars = { urls: urlDatabase, user: users[req.session["user_id"]] };
   if (!req.session["user_id"]) { 
@@ -200,3 +196,6 @@ app.post("/login", (req, res) => { // checking if user and encrpyted password th
   }
 });
 
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}!`);
+});
