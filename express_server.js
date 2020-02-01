@@ -68,14 +68,6 @@ const findShortUrl = (longURLinput, urlDatabase) => { //loops through urlDatabas
   return undefined;
 }
 
-app.get("/", (req, res) => {
-  res.send("Hello!");
-});
-
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
-
 app.get("/urls", (req, res) => { // checks if user is logged in, if not they they are redirected to their own index page
   let templateVars = { urls: urlDatabase, user: users[req.session["user_id"]] };
   if (!req.session["user_id"]) { 
@@ -149,7 +141,7 @@ app.get('/urls/:id', (req, res) => {
       user: req.session.user_id
     } 
     res.render("urls_show", templateVars );
-  } else res.send('403: Forbidden-Please login', 403)
+  } else res.status(401).send("Please login");
 });
 
 app.post('/logout', (req, res) => { //clears cookies and redirects to home page
@@ -168,7 +160,7 @@ app.post("/register", (req, res) => { //lets user register, if the email exists 
   if (userEmail === "" || userPassword === "") {
     res.send('400: Fields cannot be blank', 400);
   } else if (getUserByEmail(req.body.email, users)) {
-    res.redirect("/login");
+    res.status(401).send("Please login");
   } else {
     let userID = generateRandomString();
     users[userID] = {
