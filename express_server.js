@@ -153,7 +153,7 @@ app.get('/urls/:id', (req, res) => {
       user: req.session.user_id
     } 
     res.render("urls_show", templateVars );
-  } else res.render("urls_index");
+  } else res.send('403: Forbidden-Please login', 403)
 });
 
 app.post('/logout', (req, res) => { //clears cookies and redirects to home page
