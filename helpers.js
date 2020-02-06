@@ -7,16 +7,6 @@ const getUserByEmail = (email, users) => {
   }
 }
 
-const generateRandomString = () => {
-  let result = "";
-  const characters = "ABCDEFGHIJKLMNOPQRSTUVabcdefghijklmnopqrstuv";
-  const charactersLength = characters.length;
-  for (let i = 0; i < 6; i++) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength));
-  }
-  return result;
-};
-
 const findUserByUrl = (longURLinput, urlDatabase) => {
   for (let url of Object.keys(urlDatabase)) { //searching through keys of urlDb which stores 
     if (urlDb[url].longURL === longURLinput) return url; //if urldatabase url(shortkey) accessing longURL value
@@ -32,4 +22,4 @@ const checkUser = (user_id, users) => {
   }
 };
 
-// module.exports = { getUserByEmail, generateRandomString, checkUser }
+module.exports = { getUserByEmail, checkUser }

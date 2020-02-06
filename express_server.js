@@ -3,10 +3,6 @@ const app = express();
 const PORT = 8080; // default port 8080
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
-// const { getUserByEmail } = require("./helpers");
-// const generateRandomString = require("./helpers");
-// // const findShortUrl = require("./helpers");
-// const checkUser = require("./helpers");
 
 const bodyParser = require("body-parser");
 app.set("view engine", "ejs");
